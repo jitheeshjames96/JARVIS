@@ -59,6 +59,7 @@ def main():
     warnings = live.get("active_warnings", [])
     markets = live.get("market_snapshots", [])
     projects = live.get("projects", [])
+    sentinel_gcp = live.get("sentinel_gcp") or {}
 
     # Generate CSS/HTML
     html_content = f"""<!DOCTYPE html>
@@ -418,7 +419,30 @@ def main():
     html_content += """
         </div>
     </div>
+"""
 
+    # Sentinel GCP prod ops panel
+    if sentinel_gcp:
+        sg_status = sentinel_gcp.get("status", "unknown")
+        sg_color = {"healthy": "var(--primary)", "degraded": "#f59e0b", "outage": "var(--danger)"}.get(sg_status, "var(--text-muted)")
+        perf = sentinel_gcp.get("performance", {})
+        cost = sentinel_gcp.get("cost", {})
+        outage = sentinel_gcp.get("outage", {})
+        html_content += f"""
+    <div class="card" style="border-color: {sg_color};">
+        <h2 style="border-left-color: {sg_color};">Sentinel — GCP Prod Ops</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+            <div><span style="color: var(--text-muted); font-size: 0.75rem;">STATUS</span><br><strong style="color: {sg_color}; text-transform: uppercase;">{sg_status}</strong></div>
+            <div><span style="color: var(--text-muted); font-size: 0.75rem;">LATENCY</span><br><strong>{perf.get('dashboard_latency_ms', '—')} ms</strong></div>
+            <div><span style="color: var(--text-muted); font-size: 0.75rem;">EST. COST</span><br><strong>${cost.get('estimated_monthly_usd', '—')}/mo</strong></div>
+            <div><span style="color: var(--text-muted); font-size: 0.75rem;">ENVIRONMENT</span><br><strong>{sentinel_gcp.get('environment', 'prod')}</strong></div>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">{outage.get('message', sentinel_gcp.get('summary', ''))}</p>
+        <p style="font-size: 0.75rem; color: var(--text-muted);">Project: {sentinel_gcp.get('project', '')} &bull; Checked: {sentinel_gcp.get('checked_at', '')[:19].replace('T', ' ')} &bull; Source: {sentinel_gcp.get('source', '')}</p>
+    </div>
+"""
+
+    html_content += """
     <div class="grid-container">
         <div class="left-col">
             <div class="card">
@@ -568,6 +592,11 @@ def main():
             with gcp_cfg.open(encoding="utf-8") as gf:
                 gcp = yaml.safe_load(gf) or {}
             if gcp.get("enabled"):
+                # Pull latest Sentinel cloud report before sync
+                subprocess.run(
+                    ["python3", "scripts/sentinel_gcp_monitor.py", "--fetch-only"],
+                    check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                )
                 subprocess.run(
                     ["python3", "scripts/gcp_sync.py"],
                     check=False,

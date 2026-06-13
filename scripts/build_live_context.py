@@ -99,6 +99,7 @@ def latest_market_snapshots() -> list[dict]:
 
 def build() -> dict:
     status = read_json(ROOT / "cache" / "agent-status.json", {"agents": {}, "updated_at": None})
+    sentinel_gcp = read_json(ROOT / "cache" / "sentinel-gcp-report.json", None)
     news = read_json(ROOT / "cache" / "briefings" / "news-digest.json", [])
     tasks = parse_tasks(ROOT / "memory" / "tasks.md")
     projects = parse_projects(ROOT / "context" / "active-projects.md")
@@ -134,6 +135,7 @@ def build() -> dict:
             for n in news[:5]
         ],
         "market_snapshots": latest_market_snapshots(),
+        "sentinel_gcp": sentinel_gcp,
     }
     return context
 
