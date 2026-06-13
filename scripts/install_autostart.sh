@@ -24,7 +24,7 @@ install_plist() {
   label="$(/usr/libexec/PlistBuddy -c 'Print :Label' "$src")"
   echo "→ Installing $label"
   launchctl bootout "gui/$(id -u)/$label" 2>/dev/null || true
-  cp "$src" "$LAUNCHD/"
+  sed "s|PLACEHOLDER_ROOT|$ROOT|g" "$src" > "$LAUNCHD/$(basename "$src")"
   launchctl bootstrap "gui/$(id -u)" "$LAUNCHD/$(basename "$src")"
   launchctl enable "gui/$(id -u)/$label"
   launchctl kickstart -k "gui/$(id -u)/$label" 2>/dev/null || true
@@ -41,14 +41,16 @@ echo "JARVIS autostart — mode: $MODE"
 echo "Workspace: $ROOT"
 echo ""
 
-# Always: Keeper personal reminders (lightweight, 2×/day)
+# Always: Keeper reminders
 install_plist "$ROOT/scripts/launchd/com.jarvis.keeper.plist"
 
 if [[ "$MODE" == "full" ]]; then
+  install_plist "$ROOT/scripts/launchd/com.jarvis.web.plist"
   install_plist "$ROOT/scripts/launchd/com.jarvis.dashboard.plist"
   install_plist "$ROOT/scripts/launchd/com.jarvis.devops.plist"
   [[ -n "${WITH_VOICE:-}" ]] && install_plist "$ROOT/voice/launchd/com.jarvis.voice.plist"
 else
+  uninstall_plist "com.jarvis.web"
   uninstall_plist "com.jarvis.dashboard"
   uninstall_plist "com.jarvis.devops"
   uninstall_plist "com.jarvis.voice"
@@ -60,9 +62,11 @@ launchctl list | grep com.jarvis || true
 echo ""
 if [[ "$MODE" == "light" ]]; then
   echo "✓ Light mode — Keeper only (personal reminders 07:00 & 20:00 IST)"
-  echo "✓ Dashboard + DevOps run on GCP (Sentinel hourly) — zero local load"
-  echo "✓ Dashboard refreshes on-demand when you say 'bring up the dashboard'"
+  echo "✓ Dashboard + voice + DevOps on GCP — zero local web server"
+  echo "✓ HUD: https://storage.googleapis.com/jarvis-jitheesh-2026/dashboard.html"
+  echo "  Allow mic in Chrome when prompted · press V or type commands"
 else
-  echo "✓ Full mode — all local services installed"
+  echo "✓ Full mode — local services + optional localhost:8765 dev server"
+  echo "✓ Primary HUD still on GCP (see config/gcp.yaml)"
 fi
 [[ -n "${WITH_VOICE:-}" ]] && echo "✓ Voice daemon enabled (needs Full Disk Access on Desktop)"

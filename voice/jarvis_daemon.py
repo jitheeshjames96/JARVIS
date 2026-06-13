@@ -48,23 +48,33 @@ def wait_for_trigger(mode: str) -> bool:
     return wait_for_clap()
 
 
-def handle_interaction(trigger: str = "clap", refresh: bool = False) -> None:
+def handle_interaction(trigger: str = "clap", refresh: bool = False, session: bool = True) -> None:
     if refresh:
         refresh_stale_caches()
 
     if trigger not in ("none", "push", "off"):
         if not wait_for_trigger(trigger):
             return
-        speak("Yes?")
+        speak("Yes? I'm listening. Say stand down when finished.")
 
-    raw = listen_once()
-    if not raw:
-        return
-    command = normalize_command(raw)
-    if not command:
-        speak("I didn't catch an instruction. Try clapping, then say your command.")
-        return
-    process_command(command)
+    while True:
+        raw = listen_once()
+        if not raw:
+            if session:
+                continue
+            return
+        command = normalize_command(raw)
+        if not command:
+            speak("I didn't catch an instruction. Try again, or say stand down.")
+            if not session:
+                return
+            continue
+        if "stand down" in command.lower():
+            speak("Standing down.")
+            break
+        process_command(command)
+        if not session:
+            break
 
 
 def main():
@@ -79,6 +89,10 @@ def main():
     parser.add_argument(
         "--no-wake", action="store_true",
         help="Skip trigger — listen immediately (same as --trigger none)",
+    )
+    parser.add_argument(
+        "--no-session", action="store_true",
+        help="Single command per wake (legacy mode)",
     )
     args = parser.parse_args()
 
@@ -95,15 +109,15 @@ def main():
 
     if args.once:
         refresh_stale_caches()
-        handle_interaction(trigger=trigger)
+        handle_interaction(trigger=trigger, session=not args.no_session)
         return
 
     label = {"clap": "clap", "wake_word": "wake word", "none": "voice"}.get(trigger, trigger)
     refresh_stale_caches()
-    speak(f"JARVIS daemon online. Awaiting {label}.")
+    speak(f"JARVIS daemon online. Clap to wake. Say stand down to end session.")
     while True:
         try:
-            handle_interaction(trigger=trigger, refresh=False)
+            handle_interaction(trigger=trigger, refresh=False, session=not args.no_session)
             time.sleep(0.3)
         except KeyboardInterrupt:
             speak("Daemon standing down.")

@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JARVIS — Sentinel</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--c:#00d4ff;--bg:#010608;--text:#c8e8ff;--muted:#4a7a9a;--card:rgba(0,20,35,0.85)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);padding:1.5rem;max-width:900px;margin:0 auto}
+a{color:var(--c)}
+.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;border-bottom:1px solid rgba(0,212,255,0.3);padding-bottom:1rem}
+.hdr h1{font-family:'Orbitron',sans-serif;font-size:1.4rem;color:var(--c)}
+.badge{display:inline-block;padding:0.2rem 0.6rem;border:1px solid var(--c);border-radius:3px;font-size:0.75rem;margin-top:0.4rem}
+.badge.running,.badge.alert{border-color:#ffb020;color:#ffb020}
+.card{background:var(--card);border:1px solid rgba(0,212,255,0.2);border-radius:6px;padding:1rem;margin-bottom:1rem}
+.card h2{font-family:'Orbitron',sans-serif;font-size:0.75rem;color:var(--c);margin-bottom:0.6rem;letter-spacing:2px}
+.card h3{font-size:0.9rem;color:var(--c);margin:0.6rem 0 0.3rem}
+.card p,.card li{font-size:0.95rem;line-height:1.5;margin:0.3rem 0}
+.meta{color:var(--muted);font-size:0.8rem}
+.setup-list li{margin-bottom:0.8rem;list-style:none;border-left:3px solid var(--c);padding-left:0.6rem}
+.back{font-size:0.85rem;margin-top:1rem;display:inline-block}
+.status-healthy{color:#00ffcc}.status-critical{color:#ff4466}
+.agent-voice{border:1px solid rgba(0,212,255,0.35);border-radius:8px;padding:1rem;margin-bottom:1rem;background:rgba(0,30,50,0.5)}
+.agent-voice h2{margin-bottom:0.5rem}
+.voice-mic-agent{width:52px;height:52px;border-radius:50%;border:2px solid var(--c);background:rgba(0,212,255,0.1);
+  font-size:1.4rem;cursor:pointer;margin-bottom:0.5rem}
+.voice-mic-agent.listening{border-color:#00ffcc;box-shadow:0 0 20px rgba(0,255,204,0.5)}
+#voice-hint{font-size:0.8rem;color:var(--muted);margin-bottom:0.5rem}
+.voice-input-row{display:flex;gap:0.4rem;margin:0.5rem 0}
+.voice-input-row input{flex:1;background:rgba(0,10,20,0.9);border:1px solid rgba(0,212,255,0.3);color:var(--text);padding:0.4rem;border-radius:4px}
+.voice-input-row button{border:1px solid var(--c);background:rgba(0,212,255,0.15);color:var(--c);padding:0.4rem 0.8rem;cursor:pointer;border-radius:4px}
+#voice-log{max-height:200px;overflow-y:auto;font-size:0.85rem}
+.vlog-line{padding:0.4rem 0;border-bottom:1px solid rgba(0,212,255,0.08)}
+.v-you{color:var(--muted);font-size:0.65rem}.v-j{color:var(--c);font-size:0.65rem}
+.v-links a{color:var(--c2);font-size:0.7rem;margin-right:0.5rem}.v-handoff{color:#ffb020;font-size:0.6rem}
+.quick-cmds{display:flex;flex-wrap:wrap;gap:0.35rem;margin-top:0.5rem}
+.quick-cmds button{font-size:0.7rem;padding:0.25rem 0.5rem;border:1px solid rgba(0,212,255,0.25);
+  background:transparent;color:var(--muted);cursor:pointer;border-radius:3px}
+.quick-cmds button:hover{color:var(--c);border-color:var(--c)}
+</style></head><body>
+<div class="hdr">
+  <div>
+    <h1>🛡 Sentinel</h1>
+    <div class="badge idle">IDLE</div>
+    <p style="margin-top:0.5rem;color:var(--muted)">Cloud Security &amp; Infrastructure Guard</p>
+  </div>
+  <div style="text-align:right;font-size:0.8rem;color:var(--muted)">13:10 13 Jun 2026 IST</div>
+</div>
+<section class="card"><h2>ABOUT</h2><p>Watches your GCP production footprint — billing, uptime, latency, and scheduled health checks.</p><p style="margin-top:0.5rem"><strong>Now:</strong> GCP prod healthy: dashboard 287.8ms, est. $0.04/mo</p></section>
+<section class="agent-voice card">
+  <h2>TALK TO SENTINEL</h2>
+  <button type="button" id="voice-mic" class="voice-mic-agent" title="Session (V)">🎤</button>
+  <div id="voice-hint">Clap to wake · press V for session · say stand down to end</div>
+  <div class="voice-input-row">
+    <input id="cmd-input" type="text" placeholder="Type a command…" autocomplete="off"/>
+    <button type="button" id="cmd-send">Send</button>
+    <button type="button" id="clap-toggle" title="Toggle clap wake">👏</button>
+  </div>
+  <div id="clap-status" style="font-size:0.65rem;color:var(--muted);margin-bottom:0.3rem">Clap watch starting…</div>
+  <div class="quick-cmds">
+    <button type="button" data-cmd="Give me a status brief">Status</button>
+    <button type="button" data-cmd="What should I focus on?">Focus</button>
+    <button type="button" data-cmd="Report latest update">Report</button>
+  </div>
+  <div id="voice-log"></div>
+</section>
+<section class="card"><h2>Production monitor</h2><p>Status: <strong>healthy</strong></p><p>GCP prod healthy: dashboard 99.7ms, est. $0.04/mo</p></section>
+<a class="back" href="../dashboard.html">← Main HUD</a>
+<script>window.JARVIS_API="https://jarvis-voice-api-b4cddumfjq-el.a.run.app";window.JARVIS_AGENT="sentinel";window.JARVIS_HUD="https://storage.googleapis.com/jarvis-jitheesh-2026/dashboard.html";</script>
+<script>
+document.querySelectorAll('.quick-cmds button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    const inp=document.getElementById('cmd-input');
+    if(inp){inp.value=b.dataset.cmd;document.getElementById('cmd-send')?.click();}
+  });
+});
+/* JARVIS browser voice — conversational GCP API, clap, session, actions */
+(function () {
+  const API = window.JARVIS_API || '';
+  const AGENT = window.JARVIS_AGENT || null;
+  const HUD_HOME = window.JARVIS_HUD || 'https://storage.googleapis.com/jarvis-jitheesh-2026/dashboard.html';
+
+  let recognition = null;
+  let listening = false;
+  let sessionActive = false;
+  let clapWatchActive = false;
+  let audioCtx = null;
+  let clapStream = null;
+  let convSession = {};
+
+  function setHubState(state) {
+    const hub = document.querySelector('.hub-wrap');
+    if (hub) {
+      hub.classList.remove('listening', 'processing', 'speaking', 'idle', 'session');
+      if (state) hub.classList.add(state);
+    }
+    const mic = document.getElementById('voice-mic');
+    if (mic) mic.classList.toggle('listening', state === 'listening' || state === 'session');
+    const badge = document.getElementById('voice-status');
+    if (badge) badge.textContent = sessionActive ? 'SESSION' : (state ? state.toUpperCase() : 'ONLINE');
+    const clapBadge = document.getElementById('clap-status');
+    if (clapBadge) clapBadge.textContent = clapWatchActive ? 'CLAP ON' : 'CLAP OFF';
+    const agentBadge = document.getElementById('active-agent');
+    if (agentBadge) {
+      const a = convSession.last_agent || AGENT || 'jarvis';
+      agentBadge.textContent = a.toUpperCase();
+    }
+  }
+
+  function speakBrowser(text, onEnd) {
+    if (!window.speechSynthesis || !text) { if (onEnd) onEnd(); return; }
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 1.0;
+    u.lang = 'en-IN';
+    u.onstart = () => setHubState(sessionActive ? 'session' : 'speaking');
+    u.onend = () => {
+      if (sessionActive) { setHubState('session'); resumeSessionListen(); }
+      else setHubState('idle');
+      if (onEnd) onEnd();
+    };
+    window.speechSynthesis.speak(u);
+  }
+
+  function esc(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function showTranscript(user, jarvis, links, handoff) {
+    const box = document.getElementById('voice-log');
+    if (!box) return;
+    let linksHtml = '';
+    if (links && links.length) {
+      linksHtml = '<div class="v-links">' + links.map((l) =>
+        `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label || 'Open')}</a>`
+      ).join(' · ') + '</div>';
+    }
+    const handoffHtml = handoff ? `<span class="v-handoff">↪ ${esc(handoff)}</span> ` : '';
+    const line = document.createElement('div');
+    line.className = 'vlog-line';
+    line.innerHTML = user
+      ? `<span class="v-you">YOU</span> ${esc(user)}<br><span class="v-j">JARVIS</span> ${handoffHtml}${esc(jarvis)}${linksHtml}`
+      : `<span class="v-j">JARVIS</span> ${esc(jarvis)}`;
+    box.prepend(line);
+    while (box.children.length > 14) box.removeChild(box.lastChild);
+  }
+
+  function normalize(text) {
+    let t = text.trim();
+    for (const prefix of ['hey jarvis', 'ok jarvis', 'jarvis', 'hey', 'ok']) {
+      if (t.toLowerCase().startsWith(prefix)) {
+        t = t.slice(prefix.length).trim().replace(/^[,.\s!-]+/, '');
+        break;
+      }
+    }
+    return t;
+  }
+
+  function isStandDown(text) { return /stand\s*down/i.test(text); }
+
+  function handleActions(data) {
+    const action = data.action;
+    if (action === 'navigate_home') {
+      convSession = {};
+      const target = data.url || HUD_HOME;
+      if (!window.location.href.includes('dashboard.html')) {
+        window.location.href = target;
+      } else {
+        showTranscript('', 'Main JARVIS ready. What do you need?');
+        speakBrowser('Main JARVIS ready. What do you need?');
+        if (typeof closeHudTab === 'function') closeHudTab();
+      }
+      return true;
+    }
+    if (action === 'open_url' && data.url) {
+      window.open(data.url, '_blank', 'noopener');
+      return true;
+    }
+    if (action === 'open_tab' && data.tab && typeof openHudTab === 'function') {
+      openHudTab(data.tab);
+      return true;
+    }
+    if (action === 'end_session') return false;
+    return false;
+  }
+
+  async function sendCommand(text) {
+    const cmd = normalize(text);
+    if (!cmd) return;
+
+    if (isStandDown(cmd)) {
+      endSession('Standing down. Clap when you need me again.');
+      convSession = {};
+      return;
+    }
+
+    if (!API) {
+      showTranscript(cmd, 'Voice API not configured.');
+      return;
+    }
+
+    setHubState('processing');
+    showTranscript(cmd, '…');
+    try {
+      const res = await fetch(API, {
+        method: 'POST',
+        mode: 'cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command: cmd, agent: AGENT, session: convSession }),
+      });
+      const data = await res.json();
+      const reply = data.response || data.error || 'No response.';
+      if (data.session) convSession = data.session;
+      if (data.active_agent) convSession.last_agent = data.active_agent;
+
+      showTranscript(cmd, reply, data.links, data.handoff);
+      const navigated = handleActions(data);
+      if (!navigated) speakBrowser(reply);
+      if (data.tab && typeof openHudTab === 'function' && !navigated) {
+        setTimeout(() => openHudTab(data.tab), 800);
+      }
+    } catch (e) {
+      showTranscript(cmd, 'Cannot reach GCP voice API.');
+      setHubState(sessionActive ? 'session' : 'idle');
+      if (sessionActive) resumeSessionListen();
+    }
+  }
+
+  function resumeSessionListen() {
+    if (!sessionActive || !recognition) return;
+    recognition.continuous = true;
+    try { recognition.start(); } catch (_) {}
+  }
+
+  function startSession(fromClap) {
+    if (sessionActive) return;
+    sessionActive = true;
+    setHubState('session');
+    const guide = AGENT
+      ? `Yes? ${AGENT.toUpperCase()} channel. Ask anything — follow-ups work. Say return home or stand down.`
+      : "Yes? I'm listening. Ask market, family by name, news, or charts. Follow-ups work. Say stand down to end.";
+    showTranscript('', fromClap ? '👏 Clap detected' : '🎤 Session started');
+    speakBrowser(guide, () => {
+      if (!recognition) return;
+      recognition.continuous = true;
+      try { recognition.start(); } catch (_) {}
+    });
+    updateHint();
+  }
+
+  function endSession(msg) {
+    sessionActive = false;
+    if (recognition) {
+      try { recognition.stop(); } catch (_) {}
+      recognition.continuous = false;
+    }
+    setHubState('idle');
+    if (msg) { showTranscript('', msg); speakBrowser(msg); }
+    updateHint();
+  }
+
+  function updateHint() {
+    const hint = document.getElementById('voice-hint');
+    if (!hint) return;
+    if (sessionActive) {
+      hint.textContent = 'Session active — follow-ups OK · "return home" · "stand down" to end';
+    } else if (clapWatchActive) {
+      hint.textContent = 'Clap to wake · V for session · ask by name (Rosamma, MARUTI, Kerala news)';
+    } else {
+      hint.textContent = 'Clap or press V · conversational follow-ups enabled';
+    }
+  }
+
+  async function initClapWatch() {
+    if (!navigator.mediaDevices?.getUserMedia) return;
+    try {
+      clapStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const src = audioCtx.createMediaStreamSource(clapStream);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 512;
+      src.connect(analyser);
+      const data = new Uint8Array(analyser.fftSize);
+      let baseline = 0.02;
+      let lastClap = 0;
+      clapWatchActive = true;
+      updateHint();
+      function loop() {
+        if (!clapWatchActive) return;
+        analyser.getByteTimeDomainData(data);
+        let peak = 0, sum = 0;
+        for (let i = 0; i < data.length; i++) {
+          const v = Math.abs(data[i] - 128) / 128;
+          sum += v;
+          if (v > peak) peak = v;
+        }
+        const rms = sum / data.length;
+        baseline = baseline * 0.98 + rms * 0.02;
+        const threshold = Math.max(0.18, baseline * 3.5);
+        const now = Date.now();
+        if (peak > threshold && now - lastClap > 900) {
+          lastClap = now;
+          if (!sessionActive && !listening) startSession(true);
+        }
+        requestAnimationFrame(loop);
+      }
+      loop();
+    } catch (e) {
+      const hint = document.getElementById('voice-hint');
+      if (hint) hint.textContent = 'Allow microphone for clap + voice';
+    }
+  }
+
+  function initVoice() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const btn = document.getElementById('voice-mic');
+    const hint = document.getElementById('voice-hint');
+    const input = document.getElementById('cmd-input');
+    const send = document.getElementById('cmd-send');
+    const clapToggle = document.getElementById('clap-toggle');
+
+    if (input && send) {
+      send.addEventListener('click', () => {
+        const t = input.value.trim();
+        if (t) { sendCommand(t); input.value = ''; }
+      });
+      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') send.click(); });
+    }
+
+    if (clapToggle) {
+      clapToggle.addEventListener('click', () => {
+        if (clapWatchActive) {
+          clapWatchActive = false;
+          if (clapStream) clapStream.getTracks().forEach((t) => t.stop());
+          updateHint();
+        } else initClapWatch();
+      });
+    }
+
+    if (!SR) {
+      if (hint) hint.textContent += ' · Type commands';
+      initClapWatch();
+      return;
+    }
+
+    recognition = new SR();
+    recognition.lang = 'en-IN';
+    recognition.interimResults = false;
+    recognition.continuous = false;
+
+    recognition.onstart = () => {
+      listening = true;
+      setHubState(sessionActive ? 'session' : 'listening');
+    };
+    recognition.onend = () => {
+      listening = false;
+      if (sessionActive) setTimeout(resumeSessionListen, 300);
+      else if (!document.querySelector('.hub-wrap.speaking')) { setHubState('idle'); updateHint(); }
+    };
+    recognition.onerror = (ev) => {
+      if (sessionActive && ev.error === 'no-speech') { resumeSessionListen(); return; }
+      setHubState(sessionActive ? 'session' : 'idle');
+    };
+    recognition.onresult = (ev) => {
+      const last = ev.results.length - 1;
+      if (!ev.results[last].isFinal) return;
+      const text = ev.results[last][0].transcript.trim();
+      if (text) sendCommand(text);
+    };
+
+    function toggleListen() {
+      if (!API) return;
+      if (sessionActive) { endSession('Session ended.'); return; }
+      if (listening) { recognition.stop(); return; }
+      startSession(false);
+    }
+
+    if (btn) btn.addEventListener('click', toggleListen);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'v' || e.key === 'V') { e.preventDefault(); toggleListen(); }
+    });
+
+    initClapWatch();
+    updateHint();
+  }
+
+  document.addEventListener('DOMContentLoaded', initVoice);
+})();
+
+</script>
+</body></html>

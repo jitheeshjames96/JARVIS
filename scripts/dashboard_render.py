@@ -15,6 +15,14 @@ ROOT = Path(__file__).resolve().parent.parent
 from hud_panels import OVERLAY_CSS, OVERLAY_JS, build_tab_panels  # noqa: E402
 
 
+def _voice_js() -> str:
+    p = ROOT / "scripts" / "dashboard_voice.js"
+    try:
+        return p.read_text(encoding="utf-8")
+    except OSError:
+        return ""
+
+
 def _esc(t) -> str:
     return html.escape(str(t or ""))
 
@@ -58,6 +66,36 @@ def _weather_icon(code: int) -> str:
     return "◎"
 
 
+def _voice_api_url() -> str:
+    try:
+        import yaml
+        for name in ("gcp.yaml", "gcp.yaml.example"):
+            path = ROOT / "config" / name
+            if path.exists():
+                with path.open(encoding="utf-8") as f:
+                    cfg = yaml.safe_load(f) or {}
+                url = cfg.get("voice_api_url", "")
+                if url:
+                    return url
+    except Exception:
+        pass
+    return ""
+
+
+def _gcp_hud_url() -> str:
+    try:
+        import yaml
+        path = ROOT / "config" / "gcp.yaml"
+        if path.exists():
+            with path.open(encoding="utf-8") as f:
+                cfg = yaml.safe_load(f) or {}
+            bucket = cfg.get("bucket", "jarvis-jitheesh-2026")
+            return f"https://storage.googleapis.com/{bucket}/dashboard.html"
+    except Exception:
+        pass
+    return "https://storage.googleapis.com/jarvis-jitheesh-2026/dashboard.html"
+
+
 def _region_label() -> str:
     try:
         import yaml
@@ -84,6 +122,7 @@ def render_dashboard(
     devops_gcp: dict | None = None,
     media_items: list | None = None,
     keeper: dict | None = None,
+    vanguard: dict | None = None,
 ) -> str:
     now = datetime.now(IST)
     day_num = now.strftime("%d")
@@ -100,6 +139,7 @@ def render_dashboard(
     media = media_items if media_items is not None else live.get("media_items", [])
     devops = devops_gcp if devops_gcp is not None else live.get("devops_gcp") or {}
     keeper_data = keeper if keeper is not None else live.get("keeper") or {}
+    vanguard_data = vanguard if vanguard is not None else live.get("vanguard") or {}
     region_label = _region_label()
     news_meta = ""
     if isinstance(news_raw, dict) and news_raw.get("fetched_at"):
@@ -200,10 +240,12 @@ def render_dashboard(
 
     prio_html = "".join(f'<li>{_esc(p)}</li>' for p in priorities[:5]) or "<li>All clear</li>"
 
-    gcp_url = "https://storage.googleapis.com/jarvis-jitheesh-2026/dashboard.html"
+    voice_api = _voice_api_url()
+    gcp_url = _gcp_hud_url()
     devops_status = (devops or {}).get("status", sg_status)
     tab_panels = build_tab_panels(
-        headlines, media, devops, agents, markets, priorities, bus_html, keeper_data,
+        headlines, media, devops, agents, markets, priorities, bus_html,
+        keeper_data, vanguard_data,
     )
 
     ticker_parts = " &nbsp;·&nbsp; ".join(_esc(h.get("title", "")[:60]) for h in headlines[:12])
@@ -412,6 +454,36 @@ body{{
   display:grid;grid-template-columns:auto 1fr auto;gap:0.3rem;align-items:center}}
 .bl-tag{{background:var(--c-dim);color:var(--c);padding:0 0.3rem;font-size:0.55rem;border-radius:2px}}
 .bl-ts{{color:var(--muted)}}
+.hub-wrap.listening .hub-ring{{animation-duration:3s!important;border-color:var(--c2)!important;box-shadow:0 0 25px rgba(0,255,204,0.4)}}
+.hub-wrap.listening .hub-ring:nth-child(4){{box-shadow:0 0 60px rgba(0,255,204,0.7)}}
+.hub-wrap.processing .hub-core{{animation:pulse-hub 0.6s ease-in-out infinite}}
+.hub-wrap.speaking .hub-core span{{color:var(--c2);text-shadow:0 0 20px var(--c2)}}
+.voice-mic{{
+  background:rgba(0,212,255,0.15);border:2px solid var(--c);border-radius:50%;
+  width:48px;height:48px;font-size:1.3rem;cursor:pointer;margin-bottom:0.3rem;
+  transition:transform 0.15s,box-shadow 0.15s;
+}}
+.voice-mic:hover{{transform:scale(1.08);box-shadow:0 0 20px rgba(0,212,255,0.5)}}
+.hub-wrap.listening .voice-mic,.hub-wrap.session .voice-mic{{border-color:var(--c2);box-shadow:0 0 30px rgba(0,255,204,0.6);animation:mic-pulse 1s ease-in-out infinite}}
+.hub-wrap.session .voice-mic{{border-color:#ffb020;box-shadow:0 0 25px rgba(255,176,32,0.5)}}
+@keyframes mic-pulse{{0%,100%{{transform:scale(1)}}50%{{transform:scale(1.1)}}}}
+.voice-panel{{
+  position:fixed;bottom:56px;left:50%;transform:translateX(-50%);width:min(520px,92vw);
+  background:rgba(2,14,28,0.95);border:1px solid var(--line);border-radius:6px;
+  padding:0.6rem 0.8rem;z-index:50;max-height:140px;overflow-y:auto;
+}}
+.voice-panel .panel-hdr{{font-family:'Orbitron',sans-serif;font-size:0.55rem;color:var(--c);margin-bottom:0.3rem}}
+#voice-hint{{font-size:0.7rem;color:var(--muted);margin-bottom:0.4rem}}
+.vlog-line{{font-size:0.72rem;line-height:1.45;margin-bottom:0.35rem;border-bottom:1px solid rgba(0,212,255,0.06);padding-bottom:0.3rem}}
+.v-you{{color:var(--muted);font-size:0.6rem;letter-spacing:1px}}
+.v-j{{color:var(--c);font-size:0.6rem;letter-spacing:1px}}
+.v-links{{margin-top:0.2rem;font-size:0.68rem}}.v-links a{{color:var(--c2);margin-right:0.5rem}}
+.v-handoff{{color:#ffb020;font-size:0.58rem}}
+.voice-input-row{{display:flex;gap:0.4rem;margin:0.4rem 0}}
+.voice-input-row input{{flex:1;background:rgba(0,20,35,0.9);border:1px solid var(--line);color:var(--text);
+  padding:0.35rem 0.5rem;border-radius:3px;font-size:0.8rem}}
+.voice-input-row button{{background:var(--c-dim);border:1px solid var(--c);color:var(--c);padding:0.35rem 0.7rem;
+  cursor:pointer;border-radius:3px;font-size:0.75rem}}
 {OVERLAY_CSS}
 </style>
 </head>
@@ -461,8 +533,10 @@ body{{
       <div class="hub-ring"></div>
       {agent_orbit}
       <div class="hub-core">
+        <button type="button" id="voice-mic" class="voice-mic" title="Speak to JARVIS (V)">🎤</button>
         <span>J.A.R.V.I.S.</span>
-        <small>ONLINE</small>
+        <small id="voice-status">ONLINE</small>
+        <small id="active-agent" style="display:block;color:var(--muted);font-size:0.55rem">JARVIS</small>
       </div>
       <div class="hub-stats">
         <span>CTX <strong>{_esc(str(generated)[11:19])}</strong></span>
@@ -497,19 +571,35 @@ body{{
       <span class="active" data-tab="command">COMMAND</span>
       <span data-tab="agents">AGENTS</span>
       <span data-tab="markets">MARKETS</span>
+      <span data-tab="vanguard">VANGUARD</span>
       <span data-tab="oracle">ORACLE</span>
-      <span data-tab="media">MEDIA</span>
+      <span data-tab="media">LIFE</span>
       <span data-tab="devops">DEVOPS</span>
       <span data-tab="personal">PERSONAL</span>
     </div>
     <div class="ticker-mini">
       <div class="ticker-inner">{ticker_inner}</div>
     </div>
-    <div>CLAP ACTIVATE · AUTO REFRESH · <a href="{gcp_url}" style="color:var(--c);text-decoration:none">CLOUD HUD</a></div>
+    <div>MIC · GCP HUD · HTTPS VOICE</div>
   </div>
 
 </div>
+<div class="voice-panel">
+  <div class="panel-hdr">VOICE INTERFACE · GCP · CLAP WAKE</div>
+  <div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.3rem">
+    <span id="clap-status" style="font-size:0.65rem;color:var(--c2)">CLAP …</span>
+    <button type="button" id="clap-toggle" style="font-size:0.65rem;padding:0.2rem 0.5rem;border:1px solid var(--line);
+      background:transparent;color:var(--muted);cursor:pointer;border-radius:3px">Toggle clap</button>
+  </div>
+  <div id="voice-hint">Clap to wake · press V for session · say stand down to end</div>
+  <div class="voice-input-row">
+    <input id="cmd-input" type="text" placeholder="Type a command or ask an agent…" autocomplete="off"/>
+    <button type="button" id="cmd-send">Send</button>
+  </div>
+  <div id="voice-log"></div>
+</div>
 {tab_panels}
+<script>window.JARVIS_API="{_esc(voice_api)}";window.JARVIS_HUD="{_esc(gcp_url)}";</script>
 <script>
 function tick(){{
   const el=document.getElementById('clk');
@@ -520,6 +610,7 @@ function tick(){{
 }}
 tick();setInterval(tick,1000);
 {OVERLAY_JS}
+{_voice_js()}
 </script>
 </body>
 </html>"""

@@ -19,6 +19,7 @@ def build_tab_panels(
     priorities: list,
     bus_html: str,
     keeper: dict | None = None,
+    vanguard: dict | None = None,
 ) -> str:
     # Oracle / news panel
     news_rows = ""
@@ -70,11 +71,11 @@ def build_tab_panels(
     for name, info in agents.items():
         state = info.get("state", "idle")
         agent_rows += f"""
-        <div class="panel-row agent-row">
-          <span class="pr-src">{_e(name)} · {_e(state).upper()}</span>
+        <a class="panel-row agent-row" href="agents/{_e(name.lower())}.html">
+          <span class="pr-src">{_e(name)} · {_e(state).upper()} → full dashboard</span>
           <span class="pr-title">{_e(info.get('summary',''))}</span>
           <span class="pr-meta">Last {_e(str(info.get('last_run',''))[:16].replace('T',' '))}</span>
-        </div>"""
+        </a>"""
 
     # Markets panel
     mkt_rows = ""
@@ -114,7 +115,33 @@ def build_tab_panels(
         keeper_rows += "<p class='hint'>Add family birthdays in config/personal.yaml</p>"
     missing = keeper.get("contacts_missing_birthdays", 0)
     if missing:
-        keeper_rows += f"<p class='hint'>{missing} contact(s) need birthday dates filled in.</p>"
+        keeper_rows += f"<p class='hint'>{missing} family contact(s) need birthdays — edit config/personal.yaml</p>"
+    keeper_rows += "<p class='hint'>Keeper — family, birthdays, events & life priorities. Alerts via WhatsApp/Telegram/Email.</p>"
+
+    vanguard = vanguard or {}
+    vg_rows = f"""
+    <div class="devops-status running">
+      VANGUARD · <strong>{_e(vanguard.get('summary','Scan pending'))}</strong>
+      · {_e(str(vanguard.get('scanned_at',''))[:16].replace('T',' '))}
+    </div>"""
+
+    def _setup_row(r: dict, badge: str) -> str:
+        lv = r.get("levels") or {}
+        return f"""
+        <div class="panel-row setup-row tier-{badge}">
+          <span class="pr-src">{_e(r.get('symbol'))} · {_e(badge).upper()} · Score {_e(r.get('score'))}</span>
+          <span class="pr-title">{_e(r.get('direction','').upper())} — {_e(r.get('reason',''))}</span>
+          <span class="pr-meta">Entry {_e(lv.get('entry'))} · SL {_e(lv.get('stop'))} · TP {_e(lv.get('target'))} · R:R {_e(lv.get('rr'))}</span>
+        </div>"""
+
+    for r in vanguard.get("prefer", [])[:6]:
+        vg_rows += _setup_row(r, "prefer")
+    for r in vanguard.get("consider", [])[:6]:
+        vg_rows += _setup_row(r, "consider")
+    for r in vanguard.get("avoid", [])[:4]:
+        vg_rows += _setup_row(r, "avoid")
+    if not vanguard.get("prefer") and not vanguard.get("consider"):
+        vg_rows += "<p class='hint'>Auto-scanning NSE universe — no manual watchlist needed.</p>"
 
     return f"""
 <div id="hud-overlay" class="hud-overlay" aria-hidden="true">
@@ -129,9 +156,10 @@ def build_tab_panels(
 </div>
 
 <div id="tab-store" hidden>
-  <div id="tab-command"><ul class="prio-list">{prio_rows}</ul><p class="hint">Say: "JARVIS, what is my status?" or clap to activate voice.</p></div>
+  <div id="tab-command"><ul class="prio-list">{prio_rows}</ul><p class="hint">Clap to wake JARVIS · say stand down to end · or open an agent page.</p></div>
   <div id="tab-agents">{agent_rows or '<p class="hint">No agent data</p>'}</div>
   <div id="tab-markets">{mkt_rows or '<p class="hint">Fetching NSE/Forex...</p>'}</div>
+  <div id="tab-vanguard">{vg_rows}</div>
   <div id="tab-oracle">{news_rows or '<p class="hint">Refreshing Oracle feeds...</p>'}</div>
   <div id="tab-media">{media_rows or '<p class="hint">Loading video digest...</p>'}</div>
   <div id="tab-devops">{devops_rows}</div>
@@ -176,15 +204,19 @@ OVERLAY_CSS = """
 .check-row.ok span:last-child{color:var(--c2)}
 .check-row.fail span:last-child{color:#ff4466}
 .hint{font-size:0.72rem;color:var(--muted);margin-top:0.5rem}
+.setup-row.tier-prefer{border-left:3px solid var(--c2);padding-left:0.5rem}
+.setup-row.tier-consider{border-left:3px solid var(--c);padding-left:0.5rem}
+.setup-row.tier-avoid{border-left:3px solid #ff4466;padding-left:0.5rem}
 .bot-tabs span{cursor:pointer;padding:0.2rem 0}
 .bot-tabs span:hover{color:var(--c)}
 """
 
 OVERLAY_JS = """
 const TAB_LABELS = {
-  command:'COMMAND', agents:'AVENGERS ROSTER', markets:'VANGUARD MARKETS',
-  oracle:'ORACLE INTELLIGENCE', media:'MEDIA & VIDEO', devops:'DEVOPS GCP',
-  personal:'KEEPER — PERSONAL', bus:'MESSAGE BUS'
+  command:'COMMAND', agents:'AVENGERS ROSTER', markets:'MARKET SNAPSHOTS',
+  vanguard:'VANGUARD — SETUPS & RECOMMENDATIONS', oracle:'ORACLE INTELLIGENCE',
+  media:'LIFE, NEWS & VIDEO', devops:'DEVOPS GCP',
+  personal:'KEEPER — PERSONAL LIFE', bus:'MESSAGE BUS'
 };
 function openHudTab(name){
   const store = document.getElementById('tab-'+name);
