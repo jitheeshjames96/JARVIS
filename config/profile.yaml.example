@@ -11,6 +11,12 @@ voice:
   model_path: "voice/piper/en_GB-alan-medium.onnx"
   length_scale: 1.05
 voice_daemon:
+  trigger: clap                # clap | wake_word | none | auto
+  clap_mode: single            # single | double
+  clap_threshold: 0.22
+  clap_spike_ratio: 3.5
+  clap_cooldown_s: 1.2
+  clap_double_window_ms: 500
   wake_engine: "auto"          # auto | openwakeword | porcupine | whisper | keyboard
   wake_keyword: "jarvis"
   openwakeword_model: "hey_jarvis"

@@ -3,24 +3,22 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.jarvis.voice</string>
+    <string>com.jarvis.devops</string>
     <key>ProgramArguments</key>
     <array>
         <string>/usr/bin/python3</string>
-        <string>/Users/jitheesh.pj/Desktop/Jitheesh/JARVIS/voice/jarvis_daemon.py</string>
-        <string>--trigger</string>
-        <string>clap</string>
+        <string>/Users/jitheesh.pj/Desktop/Jitheesh/JARVIS/scripts/devops_gcp_monitor.py</string>
     </array>
     <key>WorkingDirectory</key>
     <string>/Users/jitheesh.pj/Desktop/Jitheesh/JARVIS</string>
-    <key>KeepAlive</key>
-    <true/>
+    <key>StartInterval</key>
+    <integer>3600</integer>
     <key>RunAtLoad</key>
     <true/>
     <key>StandardOutPath</key>
-    <string>/Users/jitheesh.pj/Desktop/Jitheesh/JARVIS/logs/jarvis_daemon_stdout.log</string>
+    <string>/Users/jitheesh.pj/Desktop/Jitheesh/JARVIS/logs/devops_stdout.log</string>
     <key>StandardErrorPath</key>
-    <string>/Users/jitheesh.pj/Desktop/Jitheesh/JARVIS/logs/jarvis_daemon_stderr.log</string>
+    <string>/Users/jitheesh.pj/Desktop/Jitheesh/JARVIS/logs/devops_stderr.log</string>
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key>

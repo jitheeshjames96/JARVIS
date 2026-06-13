@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "voice"))
 
 from speaker_verify import verify  # noqa: E402
+from audio_capture import record_wav  # noqa: E402
 
 
 def speak(text: str) -> None:
@@ -23,19 +24,10 @@ def speak(text: str) -> None:
 
 
 def record_audio(seconds: int = 5) -> str | None:
-    import os
-    wav = tempfile.mktemp(suffix=".wav")
-    cmd = [
-        "ffmpeg", "-y", "-f", "avfoundation", "-i", ":0",
-        "-t", str(seconds), "-ac", "1", "-ar", "16000", wav,
-    ]
-    try:
-        subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, timeout=seconds + 5)
-        if os.path.exists(wav) and os.path.getsize(wav) > 1000:
-            return wav
-    except (subprocess.SubprocessError, FileNotFoundError):
-        pass
-    return None
+    wav, err = record_wav(seconds)
+    if err:
+        print(f"[audio] {err}")
+    return wav
 
 
 def transcribe(wav_path: str) -> str | None:

@@ -1,8 +1,22 @@
-# config/notifications.yaml
+# config/notifications.yaml.example — copy to notifications.yaml
 telegram:
   enabled: false
-  bot_token: ""      # from BotFather
-  chat_id: ""
+  bot_token: ""      # from @BotFather
+  chat_id: ""        # your Telegram user/chat ID
+
+whatsapp:
+  enabled: false
+  phone: "+919846278548"   # E.164 — defaults to owner.phone in personal.yaml
+  apikey: ""               # from callmebot.com (free WhatsApp alerts)
+
+email:
+  enabled: false
+  smtp_host: smtp.gmail.com
+  smtp_port: 587
+  username: ""               # your Gmail
+  password: ""               # Gmail app password (not login password)
+  to: ""                     # defaults to owner.email in personal.yaml
+
 slack:
   enabled: false
   webhook_url: ""

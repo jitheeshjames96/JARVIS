@@ -46,9 +46,8 @@ def main():
             refreshed.append(sym)
 
     subprocess.run(["python3", str(ROOT / "scripts" / "build_live_context.py")], check=False)
-    subprocess.run(["python3", str(ROOT / "scripts" / "generate_dashboard.py")], check=False)
-
     if refreshed:
+        subprocess.run(["python3", str(ROOT / "scripts" / "generate_dashboard.py")], check=False)
         print(f"Refreshed: {', '.join(refreshed)}")
     else:
         print("All caches fresh (< 6h).")

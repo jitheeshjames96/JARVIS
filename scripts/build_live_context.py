@@ -100,7 +100,14 @@ def latest_market_snapshots() -> list[dict]:
 def build() -> dict:
     status = read_json(ROOT / "cache" / "agent-status.json", {"agents": {}, "updated_at": None})
     sentinel_gcp = read_json(ROOT / "cache" / "sentinel-gcp-report.json", None)
-    news = read_json(ROOT / "cache" / "briefings" / "news-digest.json", [])
+    news_raw = read_json(ROOT / "cache" / "briefings" / "news-digest.json", [])
+    # Support legacy list format and new {items:[]} envelope
+    if isinstance(news_raw, dict):
+        news = news_raw.get("items", [])
+        news_fetched_at = news_raw.get("fetched_at")
+    else:
+        news = news_raw if isinstance(news_raw, list) else []
+        news_fetched_at = None
     tasks = parse_tasks(ROOT / "memory" / "tasks.md")
     projects = parse_projects(ROOT / "context" / "active-projects.md")
 
@@ -119,6 +126,9 @@ def build() -> dict:
 
     priorities = [t["text"] for t in tasks["urgent"] if not t["done"]][:5]
 
+    media_raw = read_json(ROOT / "cache" / "briefings" / "media-digest.json", {})
+    media_list = media_raw.get("items", []) if isinstance(media_raw, dict) else []
+
     context = {
         "generated_at": datetime.now().isoformat(timespec="seconds"),
         "agents": status.get("agents", {}),
@@ -131,11 +141,32 @@ def build() -> dict:
         "tasks": tasks,
         "projects": projects,
         "news_headlines": [
-            {"title": n.get("title"), "source": n.get("source"), "link": n.get("link")}
-            for n in news[:5]
+            {
+                "title": n.get("title"),
+                "source": n.get("source"),
+                "link": n.get("link"),
+                "published_display": n.get("published_display", n.get("published", "")),
+                "age_display": n.get("age_display", ""),
+            }
+            for n in news[:20]
+        ],
+        "news_fetched_at": news_fetched_at,
+        "devops_gcp": read_json(ROOT / "cache" / "devops-gcp-report.json", None),
+        "media_items": [
+            {
+                "title": m.get("title"),
+                "source": m.get("source"),
+                "link": m.get("link"),
+                "published_display": m.get("published_display", ""),
+                "age_display": m.get("age_display", ""),
+                "thumbnail": m.get("thumbnail", ""),
+                "type": "video",
+            }
+            for m in media_list[:15]
         ],
         "market_snapshots": latest_market_snapshots(),
         "sentinel_gcp": sentinel_gcp,
+        "keeper": read_json(ROOT / "cache" / "keeper-report.json", None),
     }
     return context
 

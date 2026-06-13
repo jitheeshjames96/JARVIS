@@ -2,7 +2,7 @@
 name: jarvis
 description: >-
   JARVIS personal AI chief-of-staff for Jitheesh. Orchestrates named specialist
-  agents (Sentinel, Oracle, Apex, Vanguard, Tracker, Strategist, Synergy, Explorer)
+  agents (Sentinel, Oracle, Apex, Vanguard, Tracker, Strategist, Synergy, Keeper, Explorer)
   via a file-based message bus at cache/bus/. Use when the user says JARVIS,
   asks for a status report, or requests help in specific domains.
 ---
@@ -28,6 +28,7 @@ description: >-
 | **Tracker** | Momentum & penny screening | [domains/tracker.md](domains/tracker.md) |
 | **Strategist** | Position sizing & trade plans | [domains/strategist.md](domains/strategist.md) |
 | **Synergy** | Chief-of-staff — agenda & priorities | [domains/synergy.md](domains/synergy.md) |
+| **Keeper** | Personal life, family, birthdays & reminders | [domains/keeper.md](domains/keeper.md) |
 | **Explorer** | Deep research | [domains/explorer.md](domains/explorer.md) |
 | **Trading gateway** | Cross-asset trading reference | [domains/trading.md](domains/trading.md) |
 
@@ -65,6 +66,7 @@ python3 scripts/bus_poll.py --agent Strategist
 | Screen momentum / penny stocks | Tracker → Strategist | `market_warning` gate |
 | Trade plan / position size | Strategist | Poll inbox for `screener_alert`, `forex_setup`, `equity_setup` |
 | Tasks / priorities / planning | Synergy | Poll for `infra_alert` |
+| Personal / family / birthdays | Keeper | `personal_reminder` on bus |
 | AWS / GCP / infra | Sentinel | Poll for `maintenance_window` |
 | Deep research | Explorer | On demand only |
 

@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 def load_daemon_config() -> dict:
     defaults = {
+        "trigger": "clap",
         "wake_engine": "auto",
         "wake_keyword": "jarvis",
         "openwakeword_model": "hey_jarvis",
@@ -17,6 +18,11 @@ def load_daemon_config() -> dict:
         "speaker_threshold": 0.68,
         "picovoice_access_key": "",
         "porcupine_keyword_path": "",
+        "clap_mode": "single",
+        "clap_threshold": 0.12,
+        "clap_spike_ratio": 2.8,
+        "clap_cooldown_s": 1.2,
+        "clap_double_window_ms": 500,
     }
     path = ROOT / "config" / "profile.yaml"
     if not path.exists():
@@ -38,3 +44,7 @@ def speaker_threshold() -> float:
 
 def wake_threshold() -> float:
     return float(load_daemon_config().get("openwakeword_threshold", 0.60))
+
+
+def trigger_mode() -> str:
+    return str(load_daemon_config().get("trigger", "clap")).lower()

@@ -42,6 +42,12 @@ cache/voice-alerts-spoken.json
 # Notification tokens
 config/notifications.yaml
 
+# Personal life data (birthdays, relatives)
+config/personal.yaml
+
+# Regional overrides (copy from region.yaml.example)
+config/region.yaml
+
 # Voice profile (biometric)
 cache/voice-profile.json
 cache/voice-samples/

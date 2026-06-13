@@ -3,10 +3,10 @@
 
 from __future__ import annotations
 
+import argparse
 import json
-import subprocess
 import sys
-import tempfile
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -14,24 +14,41 @@ ROOT = Path(__file__).resolve().parent.parent
 PROFILE = ROOT / "cache" / "voice-profile.json"
 sys.path.insert(0, str(ROOT / "voice"))
 
+from audio_capture import check_microphone, record_wav  # noqa: E402
 from speaker_verify import build_profile_from_samples, compute_embedding  # noqa: E402
 
 
-def record(seconds: int = 4) -> str | None:
-    wav = tempfile.mktemp(suffix=".wav")
-    cmd = ["ffmpeg", "-y", "-f", "avfoundation", "-i", ":0", "-t", str(seconds), "-ac", "1", "-ar", "16000", wav]
-    try:
-        subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=seconds + 5)
-        if Path(wav).stat().st_size > 1000:
-            return wav
-    except (subprocess.SubprocessError, OSError, FileNotFoundError):
-        pass
-    return None
+def countdown(seconds: int = 3) -> None:
+    for i in range(seconds, 0, -1):
+        print(f"  {i}...", flush=True)
+        time.sleep(1)
+
+
+def capture_phrase(phrase: str, index: int, total: int) -> tuple[str | None, str | None]:
+    print(f"\n[{index}/{total}] Read aloud: \"{phrase}\"")
+    print("Get ready — recording starts after countdown.", flush=True)
+    countdown(3)
+    print(">>> RECORDING — speak now <<<", flush=True)
+    return record_wav(4)
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Enroll JARVIS speaker voice profile")
+    parser.add_argument("--check-mic", action="store_true", help="Diagnose ffmpeg + microphone only")
+    parser.add_argument(
+        "--manual", action="store_true",
+        help="Legacy mode: press Enter before each phrase (skip if Enter key misbehaves)",
+    )
+    args = parser.parse_args()
+
+    if args.check_mic:
+        raise SystemExit(check_microphone())
+
     print("=== JARVIS Speaker Enrollment ===")
-    print("Record 3 phrases. Only your voice will be accepted after enrollment.\n")
+    print("Record 3 phrases. Only your voice will be accepted after enrollment.")
+    print("No Enter key needed — auto countdown before each recording.")
+    print("Tip: if recording fails, run: python3 voice/enroll_speaker.py --check-mic\n")
+    time.sleep(1)
 
     phrases = [
         "JARVIS, report system status.",
@@ -42,11 +59,19 @@ def main():
     wav_paths = []
     samples = []
 
-    for phrase in phrases:
-        input(f"Press Enter, then read: '{phrase}'")
-        wav = record(4)
+    for i, phrase in enumerate(phrases, 1):
+        if args.manual:
+            try:
+                input(f"Press Enter, then read: '{phrase}'")
+            except (EOFError, KeyboardInterrupt):
+                print("\nEnrollment cancelled.")
+                sys.exit(1)
+            wav, err = record_wav(4)
+        else:
+            wav, err = capture_phrase(phrase, i, len(phrases))
+
         if not wav:
-            print("Recording failed. Install ffmpeg: brew install ffmpeg")
+            print(f"Recording failed.\n{err}")
             continue
         emb = compute_embedding(wav)
         samples.append({
@@ -80,6 +105,7 @@ def main():
 
     print(f"\nVoice profile saved: {PROFILE}")
     print("Speaker verification active. Non-matching voices will be denied.")
+    print("\nNext: python3 voice/jarvis_daemon.py --once --no-wake")
 
 
 if __name__ == "__main__":

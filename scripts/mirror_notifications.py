@@ -88,9 +88,17 @@ def main():
                         text = f"⚠️ *JARVIS Market Warning*:\nEvent: {payload.get('event')}\nImpact: {payload.get('impact')}\nDetail: {payload.get('title')}"
                     elif topic == "infra_alert":
                         text = f"🔧 *JARVIS Infrastructure Alert*:\nEvent: {payload.get('event')}"
+                    elif topic == "personal_reminder":
+                        days = payload.get("days_until", 0)
+                        when = "today" if days == 0 else f"in {days} day(s)"
+                        text = (
+                            f"🗓 *JARVIS Keeper Reminder*\n"
+                            f"{payload.get('label')} ({payload.get('event')}) — {when}\n"
+                            f"Date: {payload.get('date')}"
+                        )
                     
                     if text:
-                        new_notifications.append((msg_id, text))
+                        new_notifications.append((msg_id, text, topic))
             except Exception:
                 continue
 
@@ -100,8 +108,10 @@ def main():
 
     telegram_cfg = config.get("telegram", {})
     slack_cfg = config.get("slack", {})
+    whatsapp_cfg = config.get("whatsapp", {})
+    email_cfg = config.get("email", {})
 
-    for msg_id, text in new_notifications:
+    for msg_id, text, topic in new_notifications:
         if args.dry_run:
             print(f"[DRY-RUN] Mirroring notification for {msg_id}:")
             print(text)
@@ -125,8 +135,21 @@ def main():
                 except Exception as e:
                     print(f"Failed to send Slack notification: {e}")
 
+            # WhatsApp / Email via notify_channels for personal reminders
+            if not sent_ok and topic == "personal_reminder":
+                try:
+                    import sys
+                    from pathlib import Path
+                    sys.path.insert(0, str(Path(__file__).resolve().parent))
+                    from notify_channels import deliver
+                    results = deliver(text.replace("*", ""), subject="JARVIS Keeper")
+                    if any(v is True for v in results.values()):
+                        sent_ok = True
+                except Exception as e:
+                    print(f"Failed extended notification: {e}")
+
             # If dry-run is not active, but configs are disabled, we print info
-            if not telegram_cfg.get("enabled") and not slack_cfg.get("enabled"):
+            if not telegram_cfg.get("enabled") and not slack_cfg.get("enabled") and not whatsapp_cfg.get("enabled") and not email_cfg.get("enabled"):
                 print(f"[INFO] Notifications disabled. Mirrored content for {msg_id}:")
                 print(text)
                 sent_ok = True # mark true so we don't repeat print

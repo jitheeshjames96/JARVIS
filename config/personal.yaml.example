@@ -1,0 +1,61 @@
+# config/personal.yaml.example — copy to personal.yaml and fill in your data
+owner:
+  name: Jitheesh
+  phone: "+919846278548"       # WhatsApp / SMS target (E.164)
+  email: ""                    # optional — also used as email notify target
+  birthday: ""                 # MM-DD e.g. 01-27
+  location: Kochi, Kerala
+
+# Family & relatives — birthdays use MM-DD (year optional for age)
+contacts:
+  - name: "Mother"
+    relation: mother
+    birthday: ""               # e.g. 03-15
+    phone: ""
+    notes: ""
+    remind_days: [14, 7, 1, 0] # days before to notify
+  - name: "Father"
+    relation: father
+    birthday: ""
+    phone: ""
+    remind_days: [14, 7, 1, 0]
+  - name: "Sibling 1"
+    relation: sibling
+    birthday: ""
+    phone: ""
+    remind_days: [7, 1, 0]
+  - name: "Sibling 2"
+    relation: sibling
+    birthday: ""
+    phone: ""
+    remind_days: [7, 1, 0]
+
+# One-off or recurring life events
+events:
+  - title: "Example — Parents anniversary"
+    date: ""                   # YYYY-MM-DD one-off, or MM-DD if recurring
+    recurring: true
+    category: family
+    remind_days: [7, 1, 0]
+    notes: ""
+  - title: "Example — Passport renewal"
+    date: ""
+    recurring: false
+    category: admin
+    remind_days: [30, 14, 7, 1]
+    status: open
+
+# Personal priorities Keeper tracks (separate from memory/tasks.md)
+life_priorities:
+  - text: "Add real birthdays in config/personal.yaml"
+    due: ""
+    category: setup
+    status: open
+    remind_days: [1]
+
+# Reminder behaviour
+reminders:
+  timezone: Asia/Kolkata
+  morning_scan: "07:00"        # IST daily scan
+  evening_scan: "20:00"        # IST catch-up scan
+  default_remind_days: [7, 1, 0]

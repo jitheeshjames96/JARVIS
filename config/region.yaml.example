@@ -1,0 +1,24 @@
+# config/region.yaml — regional context (copy to region.yaml)
+region: India
+state: Kerala
+city: Kochi
+timezone: Asia/Kolkata
+locale: en-IN
+coordinates:
+  lat: 9.9312
+  lon: 76.2673
+currency: INR
+markets_focus:
+  - NIFTY
+  - BANKNIFTY
+  - RELIANCE
+  - TATASTEEL
+forex_focus:
+  - USDINR
+  - EURUSD
+news_bias:
+  - India economy
+  - Kerala
+  - RBI
+  - NSE
+  - forex
