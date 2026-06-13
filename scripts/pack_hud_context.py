@@ -9,6 +9,9 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from user_profile import load_family_contacts, load_user_profile  # noqa: E402
 
 
 def _categorize_news(headlines: list[dict]) -> dict[str, list]:
@@ -43,9 +46,24 @@ def _categorize_news(headlines: list[dict]) -> dict[str, list]:
     return {k: v[:8] for k, v in buckets.items() if v}
 
 
-def _family_roster(keeper: dict) -> list[dict]:
+def _family_roster(keeper: dict, contacts: list[dict]) -> list[dict]:
     roster = []
     seen = set()
+    for c in contacts:
+        name = c.get("name", "")
+        key = name.lower()
+        if not name or key in seen:
+            continue
+        seen.add(key)
+        roster.append({
+            "name": name,
+            "full_label": name,
+            "relation": c.get("relation", ""),
+            "kind": c.get("kind", "birthday" if c.get("birthday") else "contact"),
+            "date": c.get("birthday", ""),
+            "notes": c.get("notes", ""),
+            "deceased": c.get("deceased", False),
+        })
     for bucket in ("due_today", "upcoming"):
         for item in keeper.get(bucket, []):
             label = item.get("label", "")
@@ -86,7 +104,10 @@ def pack() -> Path:
     headlines = live.get("news_headlines", [])
     live["news_by_topic"] = _categorize_news(headlines)
     keeper = live.get("keeper") or {}
-    live["family_roster"] = _family_roster(keeper)
+    contacts = load_family_contacts(for_cloud=True)
+    live["user_profile"] = load_user_profile(for_cloud=True)
+    live["family_contacts"] = contacts
+    live["family_roster"] = _family_roster(keeper, contacts)
 
     out = ROOT / "cache" / "hud-context.json"
     out.write_text(json.dumps(live, indent=2) + "\n", encoding="utf-8")

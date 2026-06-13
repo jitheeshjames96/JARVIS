@@ -99,9 +99,12 @@ def _person_detail(ctx: dict, person: dict) -> str:
 
 
 def _stock_detail(ctx: dict, symbol: str, *, open_chart: bool = False) -> dict[str, Any]:
+    from tools import lookup_stock, analyze_stock_setup
+
     sym = symbol.upper()
-    setup = _stock_setup(ctx, sym)
-    price = _snap(ctx, sym) or (str(setup.get("close")) if setup else None)
+    setup = _stock_setup(ctx, sym) or analyze_stock_setup(sym)
+    live = lookup_stock(sym)
+    price = _snap(ctx, sym) or live.get("price") or (str(setup.get("close")) if setup else None)
     tv = tradingview_url(sym)
 
     parts = [f"{sym} brief"]
@@ -122,7 +125,7 @@ def _stock_detail(ctx: dict, symbol: str, *, open_chart: bool = False) -> dict[s
         if reason:
             parts.append(reason)
     else:
-        parts.append("not in latest Vanguard scan — check Markets tab for live quote")
+        parts.append(f"live price {live.get('price')} ({live.get('change_pct', 0)}%)" if live.get("price") else "fetching live quote")
 
     handoff = None
     warnings = ctx.get("active_warnings", [])
@@ -371,9 +374,11 @@ def route_command(
     command: str,
     ctx: dict,
     agent: str | None = None,
-    name: str = "Jitheesh",
+    name: str | None = None,
     session_raw: dict | None = None,
 ) -> dict[str, Any]:
+    if name is None:
+        name = (ctx.get("user_profile") or {}).get("name", "Jitheesh")
     cmd = _normalize(command)
     session = load_session(session_raw)
 

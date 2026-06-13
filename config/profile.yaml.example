@@ -1,4 +1,4 @@
-# config/profile.yaml
+# config/profile.yaml — copy from profile.yaml.example
 name: "Jitheesh"
 timezone: "Asia/Kolkata"
 locale: "en-IN"
@@ -13,13 +13,14 @@ voice:
 voice_daemon:
   trigger: clap                # clap | wake_word | none | auto
   clap_mode: single            # single | double
-  clap_threshold: 0.22
-  clap_spike_ratio: 3.5
+  clap_threshold: 0.12         # tuned from calibration
+  clap_spike_ratio: 2.8
   clap_cooldown_s: 1.2
   clap_double_window_ms: 500
   wake_engine: "auto"          # auto | openwakeword | porcupine | whisper | keyboard
   wake_keyword: "jarvis"
   openwakeword_model: "hey_jarvis"
+  openwakeword_threshold: 0.60
   picovoice_access_key: ""     # or set env PICOVOICE_ACCESS_KEY
-  porcupine_keyword_path: ""   # optional custom .ppn path
-  speaker_threshold: 0.72
+  porcupine_keyword_path: ""
+  speaker_threshold: 0.68

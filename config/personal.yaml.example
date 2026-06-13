@@ -4,7 +4,9 @@ owner:
   phone: "+919846278548"       # WhatsApp / SMS target (E.164)
   email: ""                    # optional — also used as email notify target
   birthday: ""                 # MM-DD e.g. 01-27
-  location: Kochi, Kerala
+  location: Kottayam, Kerala
+  occupation: Cloud Engineer / DevOps Lead
+  employer: Shopalyst
 
 # Family & relatives — birthdays use MM-DD (year optional for age)
 contacts:

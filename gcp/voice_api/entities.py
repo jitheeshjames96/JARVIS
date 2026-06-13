@@ -51,6 +51,15 @@ def extract_stock(cmd: str, ctx: dict) -> str | None:
 
 def _keeper_people(ctx: dict) -> list[dict]:
     people: list[dict] = []
+    for c in ctx.get("family_contacts") or []:
+        people.append({
+            "name": c.get("name", ""),
+            "full_label": c.get("name", ""),
+            "relation": c.get("relation", ""),
+            "kind": c.get("kind", "contact"),
+            "date": c.get("birthday", ""),
+            "notes": c.get("notes", ""),
+        })
     k = ctx.get("keeper") or {}
     for bucket in ("due_today", "upcoming"):
         for item in k.get(bucket, []):

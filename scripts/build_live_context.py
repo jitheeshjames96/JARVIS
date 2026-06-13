@@ -6,10 +6,14 @@ from __future__ import annotations
 import json
 import os
 import re
+import sys
 from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from user_profile import load_family_contacts, load_user_profile  # noqa: E402
 
 
 def read_json(path: Path, default=None):
@@ -167,6 +171,9 @@ def build() -> dict:
         "market_snapshots": latest_market_snapshots(),
         "sentinel_gcp": sentinel_gcp,
         "keeper": read_json(ROOT / "cache" / "keeper-report.json", None),
+        "vanguard": read_json(ROOT / "cache" / "vanguard-report.json", None),
+        "user_profile": load_user_profile(for_cloud=False),
+        "family_contacts": load_family_contacts(for_cloud=False),
     }
     return context
 
