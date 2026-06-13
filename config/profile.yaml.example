@@ -1,0 +1,19 @@
+# config/profile.yaml
+name: "Jitheesh"
+timezone: "Asia/Kolkata"
+locale: "en-IN"
+voice:
+  enabled: true
+  stt_provider: "local_whisper"
+  tts_provider: "piper"
+  voice_name: "Daniel"
+  rate: 152
+  model_path: "voice/piper/en_GB-alan-medium.onnx"
+  length_scale: 1.05
+voice_daemon:
+  wake_engine: "auto"          # auto | openwakeword | porcupine | whisper | keyboard
+  wake_keyword: "jarvis"
+  openwakeword_model: "hey_jarvis"
+  picovoice_access_key: ""     # or set env PICOVOICE_ACCESS_KEY
+  porcupine_keyword_path: ""   # optional custom .ppn path
+  speaker_threshold: 0.72

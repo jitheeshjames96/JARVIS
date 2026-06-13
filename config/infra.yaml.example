@@ -1,0 +1,10 @@
+# config/infra.yaml
+aws:
+  default_region: "ap-south-1"
+  profile: "default"
+  accounts:
+    - name: "prod"
+      id: "123456789012"
+gcp:
+  default_region: "asia-south1"
+  project_id: "my-gcp-project"

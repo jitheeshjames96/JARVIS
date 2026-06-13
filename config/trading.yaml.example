@@ -1,0 +1,23 @@
+# config/trading.yaml
+broker:
+  name: "Zerodha"
+risk:
+  risk_per_trade_percent: 1.0
+  max_daily_loss_percent: 2.0
+watchlists:
+  forex:
+    - "EURUSD"
+    - "GBPUSD"
+    - "USDJPY"
+  india_equity:
+    - "TATASTEEL"
+    - "RELIANCE"
+    - "NIFTY"
+    - "BANKNIFTY"
+profit_taking:
+  tp1: { percent_of_position: 50, at_rr: 1.0 }
+  tp2: { percent_of_position: 30, at_rr: 2.0 }
+  runner: { percent_of_position: 20, trail: "atr_multiplier_2" }
+  move_sl_to_be: "at_rr_1.0"
+  max_hold_swing_days: 10
+  no_trade_if: [market_warning_active, spread_above_threshold, daily_loss_limit_hit]

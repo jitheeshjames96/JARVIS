@@ -1,0 +1,10 @@
+# config/preferences.yaml
+briefings:
+  morning_time: "07:00"
+  weekly_review_day: "Sunday"
+  weekly_review_time: "18:00"
+cost_policy:
+  mode: "ultra_low"
+  max_subagents_per_request: 1
+  max_spoken_trade_alerts_per_session: 3
+  paid_apis: false

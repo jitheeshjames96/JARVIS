@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.jarvis.wakeword</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/python3</string>
+        <string>voice/wake_word.py</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>/Users/jitheesh.pj/Desktop/Jitheesh/JARVIS</string>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>logs/wakeword_stdout.log</string>
+    <key>StandardErrorPath</key>
+    <string>logs/wakeword_stderr.log</string>
+</dict>
+</plist>

@@ -1,0 +1,25 @@
+---
+description: DevOps standards for AWS and GCP infrastructure work
+globs: "**/*.{tf,yml,yaml,sh,py}"
+alwaysApply: false
+---
+
+# DevOps — AWS & GCP
+
+## Defaults
+- **IaC**: Terraform preferred; match existing project tooling if present
+- **AWS**: Use named profiles from `config/infra.yaml`; prefer `--dry-run` / `terraform plan` first
+- **GCP**: Use `gcloud config configurations`; specify project and region explicitly
+
+## Before changes
+1. Check `runbooks/` for existing SOPs
+2. Run plan/dry-run and show diff to user
+3. Get explicit approval for apply/deploy
+
+## Conventions
+- Tag all resources: `Owner`, `Environment`, `Project`, `ManagedBy=terraform`
+- Secrets via AWS Secrets Manager / GCP Secret Manager — never in git
+- Document rollback steps for every production change
+
+## Common stacks (from user's work)
+- EKS / GKE, PostgreSQL, Cassandra, Elasticsearch, Kong, Supabase, Terraform

@@ -1,0 +1,55 @@
+# Secrets and personal config
+config/profile.yaml
+config/infra.yaml
+config/preferences.yaml
+config/trading.yaml
+config/gcp.yaml
+.cursor/mcp.json
+
+# OS
+.DS_Store
+
+# Python
+__pycache__/
+.venv/
+*.pyc
+
+# Node
+node_modules/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# Env files
+.env
+.env.*
+
+# Local overrides
+memory/private/
+context/private/
+
+# Piper models and audio files
+voice/piper/*.onnx
+voice/piper/*.onnx.json
+voice/piper/piper
+voice/piper/lib*
+voice/output/
+cache/voice-alerts-spoken.json
+
+# Notification tokens
+config/notifications.yaml
+
+# Voice profile (biometric)
+cache/voice-profile.json
+cache/voice-samples/
+
+# Runtime cache, logs, and generated files
+cache/
+!cache/bus/
+!cache/bus/**/
+!cache/bus/**/.gitkeep
+logs/
+dashboard.html

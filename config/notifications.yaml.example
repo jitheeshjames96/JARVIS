@@ -1,0 +1,8 @@
+# config/notifications.yaml
+telegram:
+  enabled: false
+  bot_token: ""      # from BotFather
+  chat_id: ""
+slack:
+  enabled: false
+  webhook_url: ""
