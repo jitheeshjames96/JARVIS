@@ -1,11 +1,13 @@
 # config/gcp.yaml — personal GCP dashboard hosting (copy to gcp.yaml)
 # Account: jitheeshjames27@gmail.com
 # Profile: jarvis-personal
+# Project: jarvis-jitheesh-2026 (display name: jarvis)
 
 enabled: false
+account: jitheeshjames27@gmail.com
+profile: jarvis-personal
 project: jarvis-jitheesh-2026
 bucket: jarvis-jitheesh-2026
 region: asia-south1
-account: jitheeshjames27@gmail.com
 public_read: true
 cache_control: "max-age=30"
